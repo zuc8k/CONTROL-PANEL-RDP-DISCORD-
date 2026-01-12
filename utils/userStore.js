@@ -15,9 +15,14 @@ function save(data) {
 module.exports = {
   add(username, expiresAt) {
     const data = load();
-    data.users[username] = { expiresAt, active: true };
+    data.users[username] = {
+      expiresAt,
+      active: true,
+      notified: false
+    };
     save(data);
   },
+
   disable(username) {
     const data = load();
     if (data.users[username]) {
@@ -25,6 +30,15 @@ module.exports = {
       save(data);
     }
   },
+
+  markNotified(username) {
+    const data = load();
+    if (data.users[username]) {
+      data.users[username].notified = true;
+      save(data);
+    }
+  },
+
   list() {
     return load().users;
   }
