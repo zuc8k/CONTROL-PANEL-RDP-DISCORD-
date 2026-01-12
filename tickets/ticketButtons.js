@@ -1,16 +1,27 @@
 const {
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
   ChannelType,
   PermissionsBitField,
-  EmbedBuilder
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle
 } = require("discord.js");
-const cfg = require("../utils/ticketConfig").load();
+
+const ticketConfig = require("../utils/ticketConfig");
 
 module.exports = async (interaction) => {
   if (interaction.customId !== "ticket_open") return;
 
+  const cfg = ticketConfig.load();
+
+  if (!cfg.category) {
+    return interaction.reply({
+      ephemeral: true,
+      content: "❌ Ticket system not configured."
+    });
+  }
+
+  // 🎟 Create ticket channel
   const channel = await interaction.guild.channels.create({
     name: `ticket-${interaction.user.username}`,
     type: ChannelType.GuildText,
@@ -30,22 +41,31 @@ module.exports = async (interaction) => {
     ]
   });
 
+  // 🧾 Inside ticket embed
   const embed = new EmbedBuilder()
-    .setTitle("🎟 VPS Ticket")
-    .setDescription("Support will assist you shortly.")
-    .setImage(cfg.insideImage || null);
+    .setTitle("🎟 Ticket Opened")
+    .setDescription(
+      `👤 User: ${interaction.user}\n\n` +
+      "يرجى توضيح طلبك وسيتم الرد عليك قريبًا."
+    )
+    .setColor("Blue");
+
+  if (cfg.insideImage) embed.setImage(cfg.insideImage);
 
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
-      .setCustomId("ticket_claim")
-      .setLabel("📥 Claim")
-      .setStyle(ButtonStyle.Success),
-    new ButtonBuilder()
       .setCustomId("ticket_close")
-      .setLabel("🔒 Close")
+      .setLabel("🔒 Close Ticket")
       .setStyle(ButtonStyle.Danger)
   );
 
-  await channel.send({ embeds: [embed], components: [row] });
-  await interaction.reply({ ephemeral: true, content: `✅ Ticket created: ${channel}` });
+  await channel.send({
+    embeds: [embed],
+    components: [row]
+  });
+
+  await interaction.reply({
+    ephemeral: true,
+    content: `✅ Ticket created: ${channel}`
+  });
 };
