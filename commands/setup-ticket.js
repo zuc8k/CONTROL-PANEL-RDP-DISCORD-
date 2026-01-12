@@ -37,6 +37,20 @@ module.exports = {
         .setRequired(true)
     )
 
+    .addChannelOption(o =>
+      o.setName("subscriptions_channel")
+        .setDescription("Channel to show new VPS subscriptions")
+        .addChannelTypes(ChannelType.GuildText)
+        .setRequired(true)
+    )
+
+    .addChannelOption(o =>
+      o.setName("ratings_channel")
+        .setDescription("Channel to show service ratings")
+        .addChannelTypes(ChannelType.GuildText)
+        .setRequired(true)
+    )
+
     .addRoleOption(o =>
       o.setName("staff_role")
         .setDescription("Role allowed to manage tickets (staff)")
@@ -65,6 +79,8 @@ module.exports = {
       panelChannel: panelChannel.id,
       category: interaction.options.getChannel("category").id,
       logChannel: interaction.options.getChannel("log_channel").id,
+      subscriptionsChannel: interaction.options.getChannel("subscriptions_channel").id,
+      ratingsChannel: interaction.options.getChannel("ratings_channel").id,
       staffRole: staffRole.id,
       panelImage: panelImage || null,
       insideImage: insideImage || null
@@ -100,6 +116,8 @@ module.exports = {
       content:
         "✅ **Ticket system configured successfully!**\n\n" +
         `👥 Staff Role: <@&${staffRole.id}>\n` +
+        `🖥 Subscriptions Channel: <#${interaction.options.getChannel("subscriptions_channel").id}>\n` +
+        `⭐ Ratings Channel: <#${interaction.options.getChannel("ratings_channel").id}>\n` +
         "🎟 Ticket panel sent."
     });
   }
