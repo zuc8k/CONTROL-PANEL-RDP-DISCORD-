@@ -1,7 +1,11 @@
 const {
   SlashCommandBuilder,
+  PermissionFlagsBits,
   ChannelType,
-  PermissionFlagsBits
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle
 } = require("discord.js");
 
 const ticketConfig = require("../utils/ticketConfig");
@@ -46,38 +50,46 @@ module.exports = {
     ),
 
   async execute(interaction) {
+    const panelChannel = interaction.options.getChannel("panel_channel");
     const panelImage = interaction.options.getString("panel_image");
     const insideImage = interaction.options.getString("inside_image");
 
-    // 🛡️ Simple URL validation
-    const isValidUrl = url =>
-      !url || url.startsWith("http://") || url.startsWith("https://");
-
-    if (!isValidUrl(panelImage) || !isValidUrl(insideImage)) {
-      return interaction.reply({
-        ephemeral: true,
-        content: "❌ Image URLs must start with http:// or https://"
-      });
-    }
-
-    const data = {
-      panelChannel: interaction.options.getChannel("panel_channel").id,
+    ticketConfig.save({
+      panelChannel: panelChannel.id,
       category: interaction.options.getChannel("category").id,
       logChannel: interaction.options.getChannel("log_channel").id,
       panelImage: panelImage || null,
       insideImage: insideImage || null
-    };
+    });
 
-    ticketConfig.save(data);
+    // 🎟 Ticket Panel Embed
+    const embed = new EmbedBuilder()
+      .setTitle("🎟 VPS Support & Sales")
+      .setDescription(
+        "اضغط على الزر بالأسفل لفتح تذكرة\n\n" +
+        "💻 شراء VPS\n" +
+        "⚙ دعم فني\n" +
+        "💳 الدفع والاستفسارات"
+      )
+      .setColor("Green");
+
+    if (panelImage) embed.setImage(panelImage);
+
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId("ticket_open")
+        .setLabel("🎟 Open Ticket")
+        .setStyle(ButtonStyle.Success)
+    );
+
+    await panelChannel.send({
+      embeds: [embed],
+      components: [row]
+    });
 
     await interaction.reply({
       ephemeral: true,
-      content:
-        "✅ **Ticket system configured successfully!**\n\n" +
-        "📌 Panel Channel saved\n" +
-        "📂 Category saved\n" +
-        "📝 Log Channel saved\n" +
-        "🖼 Images configured"
+      content: "✅ Ticket panel sent and system configured."
     });
   }
 };
