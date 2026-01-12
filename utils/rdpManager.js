@@ -1,13 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const ipFile = path.join(__dirname, "../data/ip.json");
 const rdpFile = path.join(__dirname, "../data/rdp.json");
-
-function loadIP() {
-  if (!fs.existsSync(ipFile)) return null;
-  return JSON.parse(fs.readFileSync(ipFile, "utf8")).publicIp;
-}
 
 function loadRDP() {
   if (!fs.existsSync(rdpFile)) {
@@ -24,19 +18,25 @@ function saveRDP(data) {
 }
 
 module.exports = {
-  updateAddress() {
-    const ip = loadIP();
-    if (!ip) return null;
+  getPort() {
+    return loadRDP().port;
+  },
 
+  setPort(newPort, publicIp) {
     const rdp = loadRDP();
-    rdp.address = `${ip}:${rdp.port}`;
+    rdp.port = newPort;
+    rdp.address = publicIp ? `${publicIp}:${newPort}` : null;
     saveRDP(rdp);
+  },
 
+  updateAddress(ip) {
+    const rdp = loadRDP();
+    rdp.address = ip ? `${ip}:${rdp.port}` : null;
+    saveRDP(rdp);
     return rdp.address;
   },
 
   getAddress() {
-    const rdp = loadRDP();
-    return rdp.address;
+    return loadRDP().address;
   }
 };
