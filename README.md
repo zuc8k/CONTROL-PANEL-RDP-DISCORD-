@@ -8,7 +8,8 @@
   </a>
 </h3>
 
-# 🤖 BY: Boody Zuckerberg
+
+# 🤖 VPS BOT
 
 > Advanced **Discord Automation Bot** for  
 > **VPS Management • Ticket System • Multi-Language Support**
