@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, Collection } = require("discord.js");
+const { Client, GatewayIntentBits, Collection, EmbedBuilder } = require("discord.js");
 const fs = require("fs");
 const { token } = require("./config.json");
 
@@ -68,26 +68,46 @@ client.on("interactionCreate", async interaction => {
 
   /* ========= TICKET BUTTONS ========= */
   if (interaction.isButton()) {
+    // فتح التكت + Claim + Transfer
     await ticketButtons(interaction);
+
+    // زر Close → يظهر Modal
+    if (interaction.customId === "ticket_close") {
+      await ticketCloseModal(interaction);
+    }
   }
 
-  /* ========= TICKET CLOSE MODAL ========= */
+  /* ========= CLOSE TICKET MODAL ========= */
   if (interaction.isModalSubmit() && interaction.customId === "close_modal") {
-    await ticketCloseModal(interaction);
-
-    // ===== LOGGING =====
     const reason = interaction.fields.getTextInputValue("reason");
     const cfg = ticketConfig.load();
 
     const logChannel = interaction.guild.channels.cache.get(cfg.logChannel);
+
+    // 🧾 Log Embed احترافي
     if (logChannel) {
-      logChannel.send({
-        content:
-          `🔒 **Ticket Closed**\n` +
-          `👤 By: ${interaction.user}\n` +
-          `📄 Channel: ${interaction.channel.name}\n` +
-          `📝 Reason:\n${reason}`
-      });
+      const embed = new EmbedBuilder()
+        .setTitle("🔒 Ticket Closed")
+        .setColor("Red")
+        .addFields(
+          {
+            name: "👤 Closed By",
+            value: `${interaction.user}`,
+            inline: true
+          },
+          {
+            name: "📄 Ticket Channel",
+            value: interaction.channel.name,
+            inline: true
+          },
+          {
+            name: "📝 Reason",
+            value: reason
+          }
+        )
+        .setTimestamp();
+
+      logChannel.send({ embeds: [embed] });
     }
 
     await interaction.reply({
@@ -95,6 +115,7 @@ client.on("interactionCreate", async interaction => {
       content: "✅ Ticket closed successfully."
     });
 
+    // ⏳ حذف التكت
     setTimeout(() => {
       interaction.channel.delete().catch(() => {});
     }, 3000);
