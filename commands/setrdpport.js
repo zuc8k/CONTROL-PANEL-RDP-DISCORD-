@@ -13,13 +13,14 @@ function updateRDPPort(port) {
     : { port: 2004, address: null };
 
   data.port = port;
+  data.address = null; // هيتحدّث تلقائي بعد الريستارت
   fs.writeFileSync(rdpFile, JSON.stringify(data, null, 2));
 }
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("setrdpport")
-    .setDescription("Change RDP port (Owner only)")
+    .setDescription("Change RDP port & auto restart (Owner only)")
     .addIntegerOption(opt =>
       opt
         .setName("port")
@@ -47,26 +48,32 @@ module.exports = {
     await interaction.deferReply({ ephemeral: true });
 
     try {
-      // 🧠 Change RDP port in registry
+      // 🧠 تغيير بورت RDP في الريجستري
       await run(
         `reg add "HKLM\\System\\CurrentControlSet\\Control\\Terminal Server\\WinStations\\RDP-Tcp" /v PortNumber /t REG_DWORD /d ${port} /f`
       );
 
-      // 🔥 Open port in Firewall
+      // 🔥 فتح البورت في الفايروول
       await run(
         `netsh advfirewall firewall add rule name="RDP-${port}" dir=in action=allow protocol=TCP localport=${port}`
       );
 
-      // 💾 Update rdp.json
+      // 💾 تحديث ملف RDP
       updateRDPPort(port);
 
       log(interaction, "SET_RDP_PORT", "SUCCESS", `Port: ${port}`);
 
+      // 🔄 Restart تلقائي بعد 10 ثواني
       await interaction.editReply(
         `✅ **RDP Port Changed Successfully**\n` +
         `🖥 New Port: \`${port}\`\n` +
-        `⚠️ Restart required for full effect.`
+        `🔄 Server will restart in **10 seconds**...`
       );
+
+      setTimeout(async () => {
+        await run("shutdown /r /t 0");
+      }, 10000);
+
     } catch (e) {
       log(interaction, "SET_RDP_PORT", "FAILED", e.toString());
 
