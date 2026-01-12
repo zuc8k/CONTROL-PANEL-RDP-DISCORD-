@@ -4,68 +4,127 @@ const {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonStyle
+  ButtonStyle,
+  UserSelectMenuBuilder
 } = require("discord.js");
 
 const ticketConfig = require("../utils/ticketConfig");
 
 module.exports = async (interaction) => {
-  if (interaction.customId !== "ticket_open") return;
-
   const cfg = ticketConfig.load();
 
-  if (!cfg.category) {
+  /* ========= OPEN TICKET ========= */
+  if (interaction.customId === "ticket_open") {
+    const channel = await interaction.guild.channels.create({
+      name: `ticket-${interaction.user.username}`,
+      type: ChannelType.GuildText,
+      parent: cfg.category,
+      permissionOverwrites: [
+        {
+          id: interaction.guild.id,
+          deny: [PermissionsBitField.Flags.ViewChannel]
+        },
+        {
+          id: interaction.user.id,
+          allow: [
+            PermissionsBitField.Flags.ViewChannel,
+            PermissionsBitField.Flags.SendMessages
+          ]
+        }
+      ]
+    });
+
+    const embed = new EmbedBuilder()
+      .setTitle("🎟 Ticket Opened")
+      .setDescription(
+        `👤 User: ${interaction.user}\n` +
+        "يرجى توضيح طلبك وسيتم الرد عليك قريبًا."
+      )
+      .setColor("Blue");
+
+    if (cfg.insideImage) embed.setImage(cfg.insideImage);
+
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId("ticket_claim")
+        .setLabel("📥 Claim")
+        .setStyle(ButtonStyle.Success),
+
+      new ButtonBuilder()
+        .setCustomId("ticket_transfer")
+        .setLabel("🔁 Transfer")
+        .setStyle(ButtonStyle.Secondary),
+
+      new ButtonBuilder()
+        .setCustomId("ticket_close")
+        .setLabel("🔒 Close")
+        .setStyle(ButtonStyle.Danger)
+    );
+
+    await channel.send({ embeds: [embed], components: [row] });
+
     return interaction.reply({
       ephemeral: true,
-      content: "❌ Ticket system not configured."
+      content: `✅ Ticket created: ${channel}`
     });
   }
 
-  // 🎟 Create ticket channel
-  const channel = await interaction.guild.channels.create({
-    name: `ticket-${interaction.user.username}`,
-    type: ChannelType.GuildText,
-    parent: cfg.category,
-    permissionOverwrites: [
-      {
-        id: interaction.guild.id,
-        deny: [PermissionsBitField.Flags.ViewChannel]
-      },
-      {
-        id: interaction.user.id,
-        allow: [
-          PermissionsBitField.Flags.ViewChannel,
-          PermissionsBitField.Flags.SendMessages
-        ]
-      }
-    ]
-  });
+  /* ========= CLAIM TICKET ========= */
+  if (interaction.customId === "ticket_claim") {
+    await interaction.channel.permissionOverwrites.edit(interaction.user.id, {
+      ViewChannel: true,
+      SendMessages: true
+    });
 
-  // 🧾 Inside ticket embed
-  const embed = new EmbedBuilder()
-    .setTitle("🎟 Ticket Opened")
-    .setDescription(
-      `👤 User: ${interaction.user}\n\n` +
-      "يرجى توضيح طلبك وسيتم الرد عليك قريبًا."
-    )
-    .setColor("Blue");
+    await interaction.reply({
+      content: `📥 Ticket claimed by ${interaction.user}`
+    });
 
-  if (cfg.insideImage) embed.setImage(cfg.insideImage);
+    const logChannel = interaction.guild.channels.cache.get(cfg.logChannel);
+    if (logChannel) {
+      logChannel.send(
+        `📥 **Ticket Claimed**\n` +
+        `👤 Staff: ${interaction.user}\n` +
+        `📄 Channel: ${interaction.channel.name}`
+      );
+    }
+  }
 
-  const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId("ticket_close")
-      .setLabel("🔒 Close Ticket")
-      .setStyle(ButtonStyle.Danger)
-  );
+  /* ========= TRANSFER MENU ========= */
+  if (interaction.customId === "ticket_transfer") {
+    const menu = new ActionRowBuilder().addComponents(
+      new UserSelectMenuBuilder()
+        .setCustomId("ticket_transfer_user")
+        .setPlaceholder("Select staff to transfer ticket")
+    );
 
-  await channel.send({
-    embeds: [embed],
-    components: [row]
-  });
+    return interaction.reply({
+      ephemeral: true,
+      components: [menu]
+    });
+  }
 
-  await interaction.reply({
-    ephemeral: true,
-    content: `✅ Ticket created: ${channel}`
-  });
+  /* ========= TRANSFER ACTION ========= */
+  if (interaction.isUserSelectMenu() && interaction.customId === "ticket_transfer_user") {
+    const userId = interaction.values[0];
+
+    await interaction.channel.permissionOverwrites.edit(userId, {
+      ViewChannel: true,
+      SendMessages: true
+    });
+
+    await interaction.reply({
+      content: `🔁 Ticket transferred to <@${userId}>`
+    });
+
+    const logChannel = interaction.guild.channels.cache.get(cfg.logChannel);
+    if (logChannel) {
+      logChannel.send(
+        `🔁 **Ticket Transferred**\n` +
+        `👤 From: ${interaction.user}\n` +
+        `➡ To: <@${userId}>\n` +
+        `📄 Channel: ${interaction.channel.name}`
+      );
+    }
+  }
 };
