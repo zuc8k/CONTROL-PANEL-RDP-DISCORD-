@@ -4,7 +4,7 @@ const path = require("path");
 const dataDir = path.join(__dirname, "../data");
 const file = path.join(dataDir, "ticketConfig.json");
 
-// 🔒 تأكد إن فولدر data موجود
+// 🔒 تأكد إن فولدر data وملف الإعدادات موجودين
 function ensure() {
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
@@ -18,6 +18,7 @@ function ensure() {
           category: null,
           panelChannel: null,
           logChannel: null,
+          staffRole: null,      // 👥 رول الاستاف
           panelImage: null,
           insideImage: null
         },
@@ -37,7 +38,16 @@ function load() {
 // 💾 Save config
 function save(data) {
   ensure();
-  fs.writeFileSync(file, JSON.stringify(data, null, 2));
+
+  // دمج القيم الجديدة مع القديمة (عشان ما نمسحش حاجة بالغلط)
+  const current = load();
+
+  const finalData = {
+    ...current,
+    ...data
+  };
+
+  fs.writeFileSync(file, JSON.stringify(finalData, null, 2));
 }
 
 module.exports = {
