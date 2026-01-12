@@ -45,6 +45,10 @@
   "help.public.desc": "Commands available for everyone",
   "help.public.content": "/help\n/lang\n/ping",
 
+  "help.staff.label": "👥 Staff Commands",
+  "help.staff.desc": "Support & ticket management",
+  "help.staff.content": "• Claim Ticket\n• Transfer Ticket\n• Close Ticket\n\nNotes:\n• Respond quickly\n• Always add close reason",
+
   "help.owner.label": "👑 Owner Commands",
   "help.owner.desc": "Full bot management",
   "help.owner.content": "/setup-ticket\n/restart\n/ban\n/unban",
