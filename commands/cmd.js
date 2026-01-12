@@ -1,6 +1,7 @@
 const { SlashCommandBuilder } = require("discord.js");
 const run = require("../utils/exec");
 const perm = require("../utils/permission");
+const log = require("../utils/logger");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -12,8 +13,9 @@ module.exports = {
 
   async execute(interaction) {
     if (!perm.isOwner(interaction.user.id)) {
+      log(interaction, "CMD", "FAILED", "Permission denied");
       return interaction.reply({
-        content: "⛔ You are not allowed to use this command.",
+        content: "⛔ Owner only.",
         ephemeral: true
       });
     }
@@ -23,10 +25,10 @@ module.exports = {
 
     try {
       const output = await run(command);
-      await interaction.editReply(
-        `🖥️ **Command:**\n\`${command}\`\n\n📤 **Output:**\n\`\`\`${output}\`\`\``
-      );
+      log(interaction, "CMD", "SUCCESS", command);
+      await interaction.editReply(`🖥️ Output:\n\`\`\`${output}\`\`\``);
     } catch (err) {
+      log(interaction, "CMD", "FAILED", err);
       await interaction.editReply(`❌ Error:\n\`\`\`${err}\`\`\``);
     }
   }
