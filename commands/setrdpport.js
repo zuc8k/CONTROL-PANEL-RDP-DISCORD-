@@ -2,40 +2,77 @@ const { SlashCommandBuilder } = require("discord.js");
 const run = require("../utils/exec");
 const perm = require("../utils/permission");
 const log = require("../utils/logger");
-const rdp = require("../utils/rdpManager");
 const fs = require("fs");
 const path = require("path");
 
-const ipFile = path.join(__dirname, "../data/ip.json");
+const rdpFile = path.join(__dirname, "../data/rdp.json");
 
-function getPublicIP() {
-  if (!fs.existsSync(ipFile)) return null;
-  return JSON.parse(fs.readFileSync(ipFile, "utf8")).publicIp;
+function updateRDPPort(port) {
+  const data = fs.existsSync(rdpFile)
+    ? JSON.parse(fs.readFileSync(rdpFile, "utf8"))
+    : { port: 2004, address: null };
+
+  data.port = port;
+  fs.writeFileSync(rdpFile, JSON.stringify(data, null, 2));
 }
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("set-rdp-port")
+    .setName("setrdpport")
     .setDescription("Change RDP port (Owner only)")
-    .addIntegerOption(o =>
-      o.setName("port")
-        .setDescription("New RDP port (1024–65535)")
+    .addIntegerOption(opt =>
+      opt
+        .setName("port")
+        .setDescription("New RDP port (1024-65535)")
         .setRequired(true)
     ),
 
   async execute(interaction) {
     if (!perm.isOwner(interaction.user.id)) {
-      log(interaction, "SET_RDP_PORT", "FAILED", "Permission denied");
-      return interaction.reply({ content: "⛔ Owner only.", ephemeral: true });
-    }
-
-    const newPort = interaction.options.getInteger("port");
-
-    if (newPort < 1024 || newPort > 65535) {
       return interaction.reply({
-        ephemeral: true,
-        content: "❌ Port must be between 1024 and 65535."
+        content: "⛔ Owner only.",
+        ephemeral: true
       });
     }
 
-    const oldPort =
+    const port = interaction.options.getInteger("port");
+
+    if (port < 1024 || port > 65535) {
+      return interaction.reply({
+        content: "❌ Invalid port range (1024-65535).",
+        ephemeral: true
+      });
+    }
+
+    await interaction.deferReply({ ephemeral: true });
+
+    try {
+      // 🧠 Change RDP port in registry
+      await run(
+        `reg add "HKLM\\System\\CurrentControlSet\\Control\\Terminal Server\\WinStations\\RDP-Tcp" /v PortNumber /t REG_DWORD /d ${port} /f`
+      );
+
+      // 🔥 Open port in Firewall
+      await run(
+        `netsh advfirewall firewall add rule name="RDP-${port}" dir=in action=allow protocol=TCP localport=${port}`
+      );
+
+      // 💾 Update rdp.json
+      updateRDPPort(port);
+
+      log(interaction, "SET_RDP_PORT", "SUCCESS", `Port: ${port}`);
+
+      await interaction.editReply(
+        `✅ **RDP Port Changed Successfully**\n` +
+        `🖥 New Port: \`${port}\`\n` +
+        `⚠️ Restart required for full effect.`
+      );
+    } catch (e) {
+      log(interaction, "SET_RDP_PORT", "FAILED", e.toString());
+
+      await interaction.editReply(
+        `❌ Error changing RDP port:\n\`\`\`${e}\`\`\``
+      );
+    }
+  }
+};
