@@ -13,6 +13,11 @@ const ticketConfig = require("../utils/ticketConfig");
 module.exports = async (interaction) => {
   const cfg = ticketConfig.load();
 
+  // 👮‍♂️ Check staff permission (Role OR Admin)
+  const isStaff =
+    (cfg.staffRole && interaction.member.roles.cache.has(cfg.staffRole)) ||
+    interaction.member.permissions.has(PermissionsBitField.Flags.ManageChannels);
+
   /* ========= OPEN TICKET ========= */
   if (interaction.customId === "ticket_open") {
     const channel = await interaction.guild.channels.create({
@@ -30,7 +35,18 @@ module.exports = async (interaction) => {
             PermissionsBitField.Flags.ViewChannel,
             PermissionsBitField.Flags.SendMessages
           ]
-        }
+        },
+        ...(cfg.staffRole
+          ? [
+              {
+                id: cfg.staffRole,
+                allow: [
+                  PermissionsBitField.Flags.ViewChannel,
+                  PermissionsBitField.Flags.SendMessages
+                ]
+              }
+            ]
+          : [])
       ]
     });
 
@@ -71,21 +87,12 @@ module.exports = async (interaction) => {
 
   /* ========= CLAIM TICKET (STAFF ONLY) ========= */
   if (interaction.customId === "ticket_claim") {
-    if (
-      !interaction.member.permissions.has(
-        PermissionsBitField.Flags.ManageChannels
-      )
-    ) {
+    if (!isStaff) {
       return interaction.reply({
         ephemeral: true,
-        content: "⛔ You don't have permission to claim tickets."
+        content: "⛔ This action is for staff only."
       });
     }
-
-    await interaction.channel.permissionOverwrites.edit(interaction.user.id, {
-      ViewChannel: true,
-      SendMessages: true
-    });
 
     await interaction.reply({
       content: `📥 Ticket claimed by ${interaction.user}`
@@ -103,14 +110,10 @@ module.exports = async (interaction) => {
 
   /* ========= TRANSFER MENU (STAFF ONLY) ========= */
   if (interaction.customId === "ticket_transfer") {
-    if (
-      !interaction.member.permissions.has(
-        PermissionsBitField.Flags.ManageChannels
-      )
-    ) {
+    if (!isStaff) {
       return interaction.reply({
         ephemeral: true,
-        content: "⛔ You don't have permission to transfer tickets."
+        content: "⛔ This action is for staff only."
       });
     }
 
@@ -131,14 +134,10 @@ module.exports = async (interaction) => {
     interaction.isUserSelectMenu() &&
     interaction.customId === "ticket_transfer_user"
   ) {
-    if (
-      !interaction.member.permissions.has(
-        PermissionsBitField.Flags.ManageChannels
-      )
-    ) {
+    if (!isStaff) {
       return interaction.reply({
         ephemeral: true,
-        content: "⛔ You don't have permission to complete transfer."
+        content: "⛔ This action is for staff only."
       });
     }
 
@@ -162,5 +161,18 @@ module.exports = async (interaction) => {
         `📄 Channel: ${interaction.channel.name}`
       );
     }
+  }
+
+  /* ========= CLOSE TICKET (STAFF ONLY) ========= */
+  if (interaction.customId === "ticket_close") {
+    if (!isStaff) {
+      return interaction.reply({
+        ephemeral: true,
+        content: "⛔ This action is for staff only."
+      });
+    }
+
+    // الـ Modal بيتعالج في index.js
+    // هنا بس نسيبه يكمّل
   }
 };
