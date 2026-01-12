@@ -11,6 +11,9 @@ const {
 const fs = require("fs");
 const { token } = require("./config.json");
 
+// 🌍 i18n
+const i18n = require("./utils/i18n");
+
 // 🔥 Automation (Expire + Warn)
 const startScheduler = require("./utils/scheduler");
 
@@ -67,11 +70,17 @@ client.on("interactionCreate", async interaction => {
       await command.execute(interaction);
     } catch (error) {
       console.error(error);
+
+      const errorMsg =
+        i18n.getUserLang(interaction.user.id) === "ar"
+          ? "❌ حدث خطأ أثناء تنفيذ الأمر"
+          : "❌ Error executing command";
+
       if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({ content: "❌ Error executing command" });
+        await interaction.editReply({ content: errorMsg });
       } else {
         await interaction.reply({
-          content: "❌ Error executing command",
+          content: errorMsg,
           ephemeral: true
         });
       }
@@ -79,19 +88,19 @@ client.on("interactionCreate", async interaction => {
   }
 
   /* ========= HELP MENU (SELECT) ========= */
-  if (interaction.isStringSelectMenu()) {
+  if (interaction.isStringSelectMenu() && interaction.customId === "help_menu") {
     await helpMenu(interaction);
   }
 
   /* ========= BUTTONS ========= */
   if (interaction.isButton()) {
-    // Ticket system buttons (open / claim / transfer)
+    // 🎟 Ticket system buttons
     await ticketButtons(interaction);
 
-    // Rating buttons ⭐
+    // ⭐ Rating buttons
     await ticketRating(interaction);
 
-    // Close → show modal
+    // 🔒 Close → show modal
     if (interaction.customId === "ticket_close") {
       await ticketCloseModal(interaction);
     }
@@ -99,6 +108,7 @@ client.on("interactionCreate", async interaction => {
 
   /* ========= CLOSE TICKET MODAL ========= */
   if (interaction.isModalSubmit() && interaction.customId === "close_modal") {
+    const userId = interaction.user.id;
     const reason = interaction.fields.getTextInputValue("reason");
     const cfg = ticketConfig.load();
 
@@ -107,12 +117,23 @@ client.on("interactionCreate", async interaction => {
     // 🔒 Log Embed للإغلاق
     if (logChannel) {
       const closeEmbed = new EmbedBuilder()
-        .setTitle("🔒 Ticket Closed")
+        .setTitle(i18n.t(userId, "ticket.closed"))
         .setColor("Red")
         .addFields(
-          { name: "👤 Closed By", value: `${interaction.user}`, inline: true },
-          { name: "📄 Ticket", value: interaction.channel.name, inline: true },
-          { name: "📝 Reason", value: reason }
+          {
+            name: i18n.getUserLang(userId) === "ar" ? "👤 تم الإغلاق بواسطة" : "👤 Closed By",
+            value: `${interaction.user}`,
+            inline: true
+          },
+          {
+            name: i18n.getUserLang(userId) === "ar" ? "📄 التذكرة" : "📄 Ticket",
+            value: interaction.channel.name,
+            inline: true
+          },
+          {
+            name: i18n.getUserLang(userId) === "ar" ? "📝 السبب" : "📝 Reason",
+            value: reason
+          }
         )
         .setTimestamp();
 
@@ -121,8 +142,16 @@ client.on("interactionCreate", async interaction => {
 
     // ⭐ Rating Panel
     const ratingEmbed = new EmbedBuilder()
-      .setTitle("⭐ Rate Our Service")
-      .setDescription("من فضلك قيّم الخدمة")
+      .setTitle(
+        i18n.getUserLang(userId) === "ar"
+          ? "⭐ قيّم الخدمة"
+          : "⭐ Rate Our Service"
+      )
+      .setDescription(
+        i18n.getUserLang(userId) === "ar"
+          ? "من فضلك قيّم الخدمة"
+          : "Please rate our service"
+      )
       .setColor("Gold");
 
     const ratingRow = new ActionRowBuilder().addComponents(
@@ -141,9 +170,8 @@ client.on("interactionCreate", async interaction => {
     // ⏳ حذف التكت بعد مهلة للتقييم
     setTimeout(() => {
       interaction.channel.delete().catch(() => {});
-    }, 15000); // 15 ثانية
+    }, 15000);
   }
-
 });
 
 // ================= LOGIN =================
