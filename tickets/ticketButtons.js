@@ -9,28 +9,30 @@ const {
 } = require("discord.js");
 
 const ticketConfig = require("../utils/ticketConfig");
+const i18n = require("../utils/i18n");
 
 // 🎟 أنواع التكت
 const TICKET_TYPES = {
   ticket_buy: {
     key: "buy",
-    title: "💻 VPS Purchase",
-    description: "اكتب تفاصيل طلب شراء الـ VPS"
+    titleKey: "panel.buy.title",
+    descKey: "panel.buy.desc"
   },
   ticket_support: {
     key: "support",
-    title: "⚙ Technical Support",
-    description: "اشرح المشكلة اللي بتواجهك بالتفصيل"
+    titleKey: "panel.support.title",
+    descKey: "panel.support.desc"
   },
   ticket_payment: {
     key: "payment",
-    title: "💳 Payment & Billing",
-    description: "اكتب استفسارك بخصوص الدفع"
+    titleKey: "panel.payment.title",
+    descKey: "panel.payment.desc"
   }
 };
 
 module.exports = async (interaction) => {
   const cfg = ticketConfig.load();
+  const userId = interaction.user.id;
 
   // 👮‍♂️ صلاحيات الاستاف
   const isStaff =
@@ -45,19 +47,19 @@ module.exports = async (interaction) => {
     const existing = interaction.guild.channels.cache.find(
       ch =>
         ch.parentId === cfg.category &&
-        ch.name === `ticket-${type.key}-${interaction.user.id}`
+        ch.name === `ticket-${type.key}-${userId}`
     );
 
     if (existing) {
       return interaction.reply({
         ephemeral: true,
-        content: "❗ عندك تذكرة مفتوحة بالفعل من نفس النوع."
+        content: i18n.t(userId, "ticket.exists")
       });
     }
 
     // 🆕 إنشاء التكت
     const channel = await interaction.guild.channels.create({
-      name: `ticket-${type.key}-${interaction.user.id}`,
+      name: `ticket-${type.key}-${userId}`,
       type: ChannelType.GuildText,
       parent: cfg.category,
       permissionOverwrites: [
@@ -66,7 +68,7 @@ module.exports = async (interaction) => {
           deny: [PermissionsBitField.Flags.ViewChannel]
         },
         {
-          id: interaction.user.id,
+          id: userId,
           allow: [
             PermissionsBitField.Flags.ViewChannel,
             PermissionsBitField.Flags.SendMessages
@@ -87,9 +89,10 @@ module.exports = async (interaction) => {
     });
 
     const embed = new EmbedBuilder()
-      .setTitle(type.title)
+      .setTitle(i18n.t(userId, type.titleKey))
       .setDescription(
-        `👤 User: ${interaction.user}\n\n${type.description}`
+        `👤 ${interaction.user}\n\n` +
+        i18n.t(userId, type.descKey)
       )
       .setColor("Blue");
 
@@ -98,59 +101,63 @@ module.exports = async (interaction) => {
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId("ticket_claim")
-        .setLabel("📥 Claim")
+        .setLabel(i18n.t(userId, "button.claim"))
         .setStyle(ButtonStyle.Success),
 
       new ButtonBuilder()
         .setCustomId("ticket_transfer")
-        .setLabel("🔁 Transfer")
+        .setLabel(i18n.t(userId, "button.transfer"))
         .setStyle(ButtonStyle.Secondary),
 
       new ButtonBuilder()
         .setCustomId("ticket_close")
-        .setLabel("🔒 Close")
+        .setLabel(i18n.t(userId, "button.close"))
         .setStyle(ButtonStyle.Danger)
     );
 
     await channel.send({
-      content: `<@${interaction.user.id}> <@&${cfg.staffRole}>`,
+      content: `<@${userId}> <@&${cfg.staffRole}>`,
       embeds: [embed],
       components: [row]
     });
 
     return interaction.reply({
       ephemeral: true,
-      content: `✅ Ticket created: ${channel}`
+      content: i18n.t(userId, "ticket.created", {
+        channel: channel.toString()
+      })
     });
   }
 
-  /* ========= CLAIM TICKET (STAFF ONLY) ========= */
+  /* ========= CLAIM ========= */
   if (interaction.customId === "ticket_claim") {
     if (!isStaff) {
       return interaction.reply({
         ephemeral: true,
-        content: "⛔ This action is for staff only."
+        content: i18n.t(userId, "ticket.onlyStaff")
       });
     }
 
     await interaction.reply({
-      content: `📥 Ticket claimed by ${interaction.user}`
+      content: i18n.t(userId, "ticket.claimed", {
+        user: interaction.user.toString()
+      })
     });
   }
 
-  /* ========= TRANSFER MENU (STAFF ONLY) ========= */
+  /* ========= TRANSFER ========= */
   if (interaction.customId === "ticket_transfer") {
     if (!isStaff) {
       return interaction.reply({
         ephemeral: true,
-        content: "⛔ This action is for staff only."
+        content: i18n.t(userId, "ticket.onlyStaff")
       });
     }
 
     const menu = new ActionRowBuilder().addComponents(
       new UserSelectMenuBuilder()
         .setCustomId("ticket_transfer_user")
-        .setPlaceholder("Select staff to transfer ticket")
+        .setPlaceholder(i18n.t(userId, "ticket.transfer.select"))
     );
 
     return interaction.reply({
@@ -159,7 +166,7 @@ module.exports = async (interaction) => {
     });
   }
 
-  /* ========= TRANSFER ACTION (STAFF ONLY) ========= */
+  /* ========= TRANSFER ACTION ========= */
   if (
     interaction.isUserSelectMenu() &&
     interaction.customId === "ticket_transfer_user"
@@ -167,30 +174,32 @@ module.exports = async (interaction) => {
     if (!isStaff) {
       return interaction.reply({
         ephemeral: true,
-        content: "⛔ This action is for staff only."
+        content: i18n.t(userId, "ticket.onlyStaff")
       });
     }
 
-    const userId = interaction.values[0];
+    const targetId = interaction.values[0];
 
-    await interaction.channel.permissionOverwrites.edit(userId, {
+    await interaction.channel.permissionOverwrites.edit(targetId, {
       ViewChannel: true,
       SendMessages: true
     });
 
     await interaction.reply({
-      content: `🔁 Ticket transferred to <@${userId}>`
+      content: i18n.t(userId, "ticket.transferred", {
+        user: `<@${targetId}>`
+      })
     });
   }
 
-  /* ========= CLOSE TICKET ========= */
+  /* ========= CLOSE ========= */
   if (interaction.customId === "ticket_close") {
     if (!isStaff) {
       return interaction.reply({
         ephemeral: true,
-        content: "⛔ This action is for staff only."
+        content: i18n.t(userId, "ticket.onlyStaff")
       });
     }
-    // Modal الإغلاق بيتفتح ويتعالج في index.js
+    // Modal الإغلاق بيتعالج في index.js
   }
 };
