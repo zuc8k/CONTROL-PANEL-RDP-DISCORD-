@@ -1,6 +1,7 @@
-const { EmbedBuilder } = require("discord.js");
+const { EmbedBuilder, PermissionsBitField } = require("discord.js");
 const { ownerId } = require("../config.json");
 const i18n = require("../utils/i18n");
+const ticketConfig = require("../utils/ticketConfig");
 
 module.exports = async (interaction) => {
   if (!interaction.isStringSelectMenu()) return;
@@ -8,7 +9,12 @@ module.exports = async (interaction) => {
 
   const userId = interaction.user.id;
   const value = interaction.values[0];
+  const cfg = ticketConfig.load();
+
   const isOwner = userId === ownerId;
+  const isStaff =
+    (cfg.staffRole && interaction.member.roles.cache.has(cfg.staffRole)) ||
+    interaction.member.permissions.has(PermissionsBitField.Flags.ManageChannels);
 
   let embed;
 
@@ -78,7 +84,41 @@ module.exports = async (interaction) => {
       );
   }
 
-  /* ========= OWNER (PROTECTED) ========= */
+  /* ========= STAFF ========= */
+  if (value === "staff") {
+    if (!isStaff && !isOwner) {
+      return interaction.reply({
+        ephemeral: true,
+        content:
+          i18n.getUserLang(userId) === "ar"
+            ? "⛔ هذا القسم مخصص للإدارة فقط"
+            : "⛔ This section is for staff only"
+      });
+    }
+
+    embed = new EmbedBuilder()
+      .setTitle(i18n.getUserLang(userId) === "ar" ? "👥 أوامر الإدارة" : "👥 Staff Commands")
+      .setColor("Orange")
+      .setDescription(
+        i18n.getUserLang(userId) === "ar"
+          ? "**إدارة التذاكر:**\n" +
+            "• Claim Ticket\n" +
+            "• Transfer Ticket\n" +
+            "• Close Ticket\n\n" +
+            "**ملاحظات:**\n" +
+            "• الرد بسرعة على العملاء\n" +
+            "• كتابة سبب الإغلاق"
+          : "**Ticket Management:**\n" +
+            "• Claim Ticket\n" +
+            "• Transfer Ticket\n" +
+            "• Close Ticket\n\n" +
+            "**Notes:**\n" +
+            "• Respond quickly\n" +
+            "• Always add close reason"
+      );
+  }
+
+  /* ========= OWNER ========= */
   if (value === "owner") {
     if (!isOwner) {
       return interaction.reply({
