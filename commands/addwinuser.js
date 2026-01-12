@@ -1,6 +1,7 @@
 const { SlashCommandBuilder } = require("discord.js");
 const run = require("../utils/exec");
 const perm = require("../utils/permission");
+const log = require("../utils/logger");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -15,6 +16,7 @@ module.exports = {
 
   async execute(interaction) {
     if (!perm.isOwner(interaction.user.id)) {
+      log(interaction, "ADD_USER", "FAILED", "Permission denied");
       return interaction.reply({ content: "⛔ Owner only.", ephemeral: true });
     }
 
@@ -26,8 +28,10 @@ module.exports = {
     try {
       await run(`net user ${user} ${pass} /add`);
       await run(`net localgroup "Remote Desktop Users" ${user} /add`);
+      log(interaction, "ADD_USER", "SUCCESS", user);
       await interaction.editReply(`✅ User **${user}** created.`);
     } catch (err) {
+      log(interaction, "ADD_USER", "FAILED", err);
       await interaction.editReply(`❌ Error:\n\`\`\`${err}\`\`\``);
     }
   }
