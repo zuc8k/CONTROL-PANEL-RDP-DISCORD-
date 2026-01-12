@@ -12,12 +12,16 @@ module.exports = async (interaction) => {
     .setCustomId("close_modal")
     .setTitle("Close Ticket");
 
-  const reason = new TextInputBuilder()
+  const reasonInput = new TextInputBuilder()
     .setCustomId("reason")
-    .setLabel("Reason for closing")
+    .setLabel("Reason for closing the ticket")
     .setStyle(TextInputStyle.Paragraph)
-    .setRequired(true);
+    .setRequired(true)
+    .setPlaceholder("Write the reason here...");
 
-  modal.addComponents(new ActionRowBuilder().addComponents(reason));
+  modal.addComponents(
+    new ActionRowBuilder().addComponents(reasonInput)
+  );
+
   await interaction.showModal(modal);
 };
