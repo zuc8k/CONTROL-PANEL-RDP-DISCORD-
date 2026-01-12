@@ -2,4 +2,5 @@
   "token": "BOT_TOKEN_HERE",
   "clientId": "BOT_CLIENT_ID",
   "guildId": "SERVER_ID"
+  "ownerid": "USER_ID"
 }
