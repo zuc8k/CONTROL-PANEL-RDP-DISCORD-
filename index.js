@@ -23,6 +23,9 @@ const ticketCloseModal = require("./tickets/ticketCloseModal");
 const ticketRating = require("./tickets/ticketRating");
 const ticketConfig = require("./utils/ticketConfig");
 
+// 📖 Help menu handler
+const helpMenu = require("./tickets/helpMenu");
+
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
 });
@@ -75,9 +78,14 @@ client.on("interactionCreate", async interaction => {
     }
   }
 
+  /* ========= HELP MENU (SELECT) ========= */
+  if (interaction.isStringSelectMenu()) {
+    await helpMenu(interaction);
+  }
+
   /* ========= BUTTONS ========= */
   if (interaction.isButton()) {
-    // Ticket system buttons
+    // Ticket system buttons (open / claim / transfer)
     await ticketButtons(interaction);
 
     // Rating buttons ⭐
