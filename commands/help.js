@@ -1,25 +1,59 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  ActionRowBuilder,
+  StringSelectMenuBuilder
+} = require("discord.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("help")
-    .setDescription("Show all bot commands"),
+    .setDescription("Bot help & command menu"),
 
   async execute(interaction) {
     const embed = new EmbedBuilder()
-      .setTitle("📜 Bot Commands")
+      .setTitle("🤖 Bot Help Menu")
       .setColor("Blue")
-      .setDescription(`
-/ping - Check latency
-/help - Show commands
-/userinfo - User info
-/serverinfo - Server info
-/adduser - Add VPS user
-/deluser - Delete VPS user
-/lock - Lock server
-/unlock - Unlock server
-      `);
+      .setDescription(
+        "اختار النظام اللي محتاجه من المينيو 👇\n\n" +
+        "🎟 **Ticket** — استخدام للكل\n" +
+        "🖥 **VPS** — إدارة واشتراكات\n" +
+        "🌍 **Public** — أوامر عامة\n" +
+        "👑 **Owner** — أوامر المالك فقط"
+      );
 
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    const menu = new StringSelectMenuBuilder()
+      .setCustomId("help_menu")
+      .setPlaceholder("📂 Select system")
+      .addOptions(
+        {
+          label: "🎟 Ticket System",
+          value: "ticket",
+          description: "Ticket commands"
+        },
+        {
+          label: "🖥 VPS System",
+          value: "vps",
+          description: "VPS management"
+        },
+        {
+          label: "🌍 Public Commands",
+          value: "public",
+          description: "Commands for everyone"
+        },
+        {
+          label: "👑 Owner Commands",
+          value: "owner",
+          description: "Owner only"
+        }
+      );
+
+    const row = new ActionRowBuilder().addComponents(menu);
+
+    await interaction.reply({
+      embeds: [embed],
+      components: [row],
+      ephemeral: true
+    });
   }
 };
