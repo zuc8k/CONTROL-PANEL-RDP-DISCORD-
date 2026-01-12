@@ -2,8 +2,11 @@ const { Client, GatewayIntentBits, Collection } = require("discord.js");
 const fs = require("fs");
 const { token } = require("./config.json");
 
-// 🔥 Automation Scheduler (needs client)
+// 🔥 Automation (Expire + Warn)
 const startScheduler = require("./utils/scheduler");
+
+// 🌍 Public IP Watcher
+const startIPWatcher = require("./utils/ipWatcher");
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
@@ -25,9 +28,13 @@ for (const file of commandFiles) {
 client.once("ready", () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
 
-  // 🔔 Auto-Warn + ⛔ Auto-Expire
+  // ⏱ Auto-Expire + Auto-Warn
   startScheduler(client);
   console.log("⏱ Automation Scheduler started");
+
+  // 🌍 Public IP Watcher
+  startIPWatcher(client);
+  console.log("🌍 Public IP Watcher started");
 });
 
 // ================= INTERACTIONS =================
