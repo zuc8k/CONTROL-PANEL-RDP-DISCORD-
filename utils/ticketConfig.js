@@ -18,7 +18,9 @@ function ensure() {
           category: null,
           panelChannel: null,
           logChannel: null,
-          staffRole: null,      // 👥 رول الاستاف
+          staffRole: null,              // 👥 رول الاستاف
+          subscriptionsChannel: null,  // 🖥 قناة الاشتراكات
+          ratingsChannel: null,        // ⭐ قناة التقييمات
           panelImage: null,
           insideImage: null
         },
@@ -35,13 +37,11 @@ function load() {
   return JSON.parse(fs.readFileSync(file, "utf8"));
 }
 
-// 💾 Save config
+// 💾 Save config (دمج بدون مسح)
 function save(data) {
   ensure();
 
-  // دمج القيم الجديدة مع القديمة (عشان ما نمسحش حاجة بالغلط)
   const current = load();
-
   const finalData = {
     ...current,
     ...data
