@@ -10,7 +10,7 @@
 
 
 <h1 align="center">
-  🤖 VPS BOT
+ 🤖 VPS BOT
 </h1>
 
 > Advanced **Discord Automation Bot** for  
