@@ -10,18 +10,54 @@ const {
 
 const ticketConfig = require("../utils/ticketConfig");
 
+// 🎟 أنواع التكت
+const TICKET_TYPES = {
+  ticket_buy: {
+    key: "buy",
+    title: "💻 VPS Purchase",
+    description: "اكتب تفاصيل طلب شراء الـ VPS"
+  },
+  ticket_support: {
+    key: "support",
+    title: "⚙ Technical Support",
+    description: "اشرح المشكلة اللي بتواجهك بالتفصيل"
+  },
+  ticket_payment: {
+    key: "payment",
+    title: "💳 Payment & Billing",
+    description: "اكتب استفسارك بخصوص الدفع"
+  }
+};
+
 module.exports = async (interaction) => {
   const cfg = ticketConfig.load();
 
-  // 👮‍♂️ Check staff permission (Role OR Admin)
+  // 👮‍♂️ صلاحيات الاستاف
   const isStaff =
     (cfg.staffRole && interaction.member.roles.cache.has(cfg.staffRole)) ||
     interaction.member.permissions.has(PermissionsBitField.Flags.ManageChannels);
 
-  /* ========= OPEN TICKET ========= */
-  if (interaction.customId === "ticket_open") {
+  /* ========= OPEN TICKET BY TYPE ========= */
+  if (interaction.isButton() && TICKET_TYPES[interaction.customId]) {
+    const type = TICKET_TYPES[interaction.customId];
+
+    // ❌ منع تكت مكرر من نفس النوع
+    const existing = interaction.guild.channels.cache.find(
+      ch =>
+        ch.parentId === cfg.category &&
+        ch.name === `ticket-${type.key}-${interaction.user.id}`
+    );
+
+    if (existing) {
+      return interaction.reply({
+        ephemeral: true,
+        content: "❗ عندك تذكرة مفتوحة بالفعل من نفس النوع."
+      });
+    }
+
+    // 🆕 إنشاء التكت
     const channel = await interaction.guild.channels.create({
-      name: `ticket-${interaction.user.username}`,
+      name: `ticket-${type.key}-${interaction.user.id}`,
       type: ChannelType.GuildText,
       parent: cfg.category,
       permissionOverwrites: [
@@ -51,10 +87,9 @@ module.exports = async (interaction) => {
     });
 
     const embed = new EmbedBuilder()
-      .setTitle("🎟 Ticket Opened")
+      .setTitle(type.title)
       .setDescription(
-        `👤 User: ${interaction.user}\n\n` +
-        "يرجى توضيح طلبك وسيتم الرد عليك قريبًا."
+        `👤 User: ${interaction.user}\n\n${type.description}`
       )
       .setColor("Blue");
 
@@ -77,7 +112,11 @@ module.exports = async (interaction) => {
         .setStyle(ButtonStyle.Danger)
     );
 
-    await channel.send({ embeds: [embed], components: [row] });
+    await channel.send({
+      content: `<@${interaction.user.id}> <@&${cfg.staffRole}>`,
+      embeds: [embed],
+      components: [row]
+    });
 
     return interaction.reply({
       ephemeral: true,
@@ -97,15 +136,6 @@ module.exports = async (interaction) => {
     await interaction.reply({
       content: `📥 Ticket claimed by ${interaction.user}`
     });
-
-    const logChannel = interaction.guild.channels.cache.get(cfg.logChannel);
-    if (logChannel) {
-      logChannel.send(
-        `📥 **Ticket Claimed**\n` +
-        `👤 Staff: ${interaction.user}\n` +
-        `📄 Channel: ${interaction.channel.name}`
-      );
-    }
   }
 
   /* ========= TRANSFER MENU (STAFF ONLY) ========= */
@@ -151,19 +181,9 @@ module.exports = async (interaction) => {
     await interaction.reply({
       content: `🔁 Ticket transferred to <@${userId}>`
     });
-
-    const logChannel = interaction.guild.channels.cache.get(cfg.logChannel);
-    if (logChannel) {
-      logChannel.send(
-        `🔁 **Ticket Transferred**\n` +
-        `👤 From: ${interaction.user}\n` +
-        `➡ To: <@${userId}>\n` +
-        `📄 Channel: ${interaction.channel.name}`
-      );
-    }
   }
 
-  /* ========= CLOSE TICKET (STAFF ONLY) ========= */
+  /* ========= CLOSE TICKET ========= */
   if (interaction.customId === "ticket_close") {
     if (!isStaff) {
       return interaction.reply({
@@ -171,8 +191,6 @@ module.exports = async (interaction) => {
         content: "⛔ This action is for staff only."
       });
     }
-
-    // الـ Modal بيتعالج في index.js
-    // هنا بس نسيبه يكمّل
+    // Modal الإغلاق بيتفتح ويتعالج في index.js
   }
 };
