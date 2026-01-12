@@ -29,6 +29,26 @@
 
   "ticket.transfer.select": "اختار موظف لتحويل التذكرة",
 
+  "help.title": "🤖 مركز المساعدة",
+  "help.desc": "اختار النظام اللي محتاج تعرف أوامره",
+  "help.select": "اختار نظام",
+
+  "help.ticket.label": "🎟 نظام التذاكر",
+  "help.ticket.desc": "فتح وإدارة التذاكر",
+  "help.ticket.content": "/فتح تذكرة\n/استلام تذكرة\n/تحويل تذكرة\n/إغلاق تذكرة",
+
+  "help.vps.label": "💻 نظام الـ VPS",
+  "help.vps.desc": "إدارة واشتراكات الـ VPS",
+  "help.vps.content": "/buy-vps\n/my-vps\n/status\n/extend",
+
+  "help.public.label": "🌍 أوامر عامة",
+  "help.public.desc": "أوامر متاحة للجميع",
+  "help.public.content": "/help\n/lang\n/ping",
+
+  "help.owner.label": "👑 أوامر المالك",
+  "help.owner.desc": "إدارة كاملة للبوت",
+  "help.owner.content": "/setup-ticket\n/restart\n/ban\n/unban",
+
   "lang.changed.ar": "✅ تم تغيير اللغة إلى العربية",
   "lang.changed.en": "✅ Language changed to English"
 }
