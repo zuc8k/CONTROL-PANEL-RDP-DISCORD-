@@ -45,6 +45,10 @@
   "help.public.desc": "أوامر متاحة للجميع",
   "help.public.content": "/help\n/lang\n/ping",
 
+  "help.staff.label": "👥 أوامر الإدارة",
+  "help.staff.desc": "إدارة التذاكر والدعم",
+  "help.staff.content": "• Claim Ticket\n• Transfer Ticket\n• Close Ticket\n\nملاحظات:\n• الرد بسرعة\n• كتابة سبب الإغلاق",
+
   "help.owner.label": "👑 أوامر المالك",
   "help.owner.desc": "إدارة كاملة للبوت",
   "help.owner.content": "/setup-ticket\n/restart\n/ban\n/unban",
