@@ -9,7 +9,9 @@
 </h3>
 
 
-# 🤖 VPS BOT
+<h1 align="center">
+  🤖 VPS BOT
+</h1>
 
 > Advanced **Discord Automation Bot** for  
 > **VPS Management • Ticket System • Multi-Language Support**
