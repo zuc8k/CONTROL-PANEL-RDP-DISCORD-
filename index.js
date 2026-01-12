@@ -1,4 +1,13 @@
-const { Client, GatewayIntentBits, Collection, EmbedBuilder } = require("discord.js");
+const {
+  Client,
+  GatewayIntentBits,
+  Collection,
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle
+} = require("discord.js");
+
 const fs = require("fs");
 const { token } = require("./config.json");
 
@@ -11,6 +20,7 @@ const startIPWatcher = require("./utils/ipWatcher");
 // 🎟 Ticket handlers
 const ticketButtons = require("./tickets/ticketButtons");
 const ticketCloseModal = require("./tickets/ticketCloseModal");
+const ticketRating = require("./tickets/ticketRating");
 const ticketConfig = require("./utils/ticketConfig");
 
 const client = new Client({
@@ -54,7 +64,6 @@ client.on("interactionCreate", async interaction => {
       await command.execute(interaction);
     } catch (error) {
       console.error(error);
-
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply({ content: "❌ Error executing command" });
       } else {
@@ -66,12 +75,15 @@ client.on("interactionCreate", async interaction => {
     }
   }
 
-  /* ========= TICKET BUTTONS ========= */
+  /* ========= BUTTONS ========= */
   if (interaction.isButton()) {
-    // فتح التكت + Claim + Transfer
+    // Ticket system buttons
     await ticketButtons(interaction);
 
-    // زر Close → يظهر Modal
+    // Rating buttons ⭐
+    await ticketRating(interaction);
+
+    // Close → show modal
     if (interaction.customId === "ticket_close") {
       await ticketCloseModal(interaction);
     }
@@ -84,41 +96,44 @@ client.on("interactionCreate", async interaction => {
 
     const logChannel = interaction.guild.channels.cache.get(cfg.logChannel);
 
-    // 🧾 Log Embed احترافي
+    // 🔒 Log Embed للإغلاق
     if (logChannel) {
-      const embed = new EmbedBuilder()
+      const closeEmbed = new EmbedBuilder()
         .setTitle("🔒 Ticket Closed")
         .setColor("Red")
         .addFields(
-          {
-            name: "👤 Closed By",
-            value: `${interaction.user}`,
-            inline: true
-          },
-          {
-            name: "📄 Ticket Channel",
-            value: interaction.channel.name,
-            inline: true
-          },
-          {
-            name: "📝 Reason",
-            value: reason
-          }
+          { name: "👤 Closed By", value: `${interaction.user}`, inline: true },
+          { name: "📄 Ticket", value: interaction.channel.name, inline: true },
+          { name: "📝 Reason", value: reason }
         )
         .setTimestamp();
 
-      logChannel.send({ embeds: [embed] });
+      logChannel.send({ embeds: [closeEmbed] });
     }
 
+    // ⭐ Rating Panel
+    const ratingEmbed = new EmbedBuilder()
+      .setTitle("⭐ Rate Our Service")
+      .setDescription("من فضلك قيّم الخدمة")
+      .setColor("Gold");
+
+    const ratingRow = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId("rate_1").setLabel("⭐").setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId("rate_2").setLabel("⭐⭐").setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId("rate_3").setLabel("⭐⭐⭐").setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId("rate_4").setLabel("⭐⭐⭐⭐").setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId("rate_5").setLabel("⭐⭐⭐⭐⭐").setStyle(ButtonStyle.Success)
+    );
+
     await interaction.reply({
-      ephemeral: true,
-      content: "✅ Ticket closed successfully."
+      embeds: [ratingEmbed],
+      components: [ratingRow]
     });
 
-    // ⏳ حذف التكت
+    // ⏳ حذف التكت بعد مهلة للتقييم
     setTimeout(() => {
       interaction.channel.delete().catch(() => {});
-    }, 3000);
+    }, 15000); // 15 ثانية
   }
 
 });
