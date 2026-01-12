@@ -75,6 +75,7 @@ module.exports = {
     const insideImage = interaction.options.getString("inside_image");
     const staffRole = interaction.options.getRole("staff_role");
 
+    // 💾 Save config
     ticketConfig.save({
       panelChannel: panelChannel.id,
       category: interaction.options.getChannel("category").id,
@@ -90,20 +91,31 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setTitle("🎟 VPS Support & Sales")
       .setDescription(
-        "اضغط على الزر بالأسفل لفتح تذكرة\n\n" +
-        "💻 شراء VPS\n" +
-        "⚙ دعم فني\n" +
-        "💳 الدفع والاستفسارات"
+        "اختار نوع التذكرة اللي محتاجها 👇\n\n" +
+        "💻 **Buy VPS** — شراء VPS جديد\n" +
+        "⚙ **Support** — دعم فني\n" +
+        "💳 **Payment** — الدفع والاستفسارات"
       )
       .setColor("Green");
 
     if (panelImage) embed.setImage(panelImage);
 
+    // 🎯 Buttons (Ticket Categories)
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
-        .setCustomId("ticket_open")
-        .setLabel("🎟 Open Ticket")
-        .setStyle(ButtonStyle.Success)
+        .setCustomId("ticket_buy")
+        .setLabel("💻 Buy VPS")
+        .setStyle(ButtonStyle.Success),
+
+      new ButtonBuilder()
+        .setCustomId("ticket_support")
+        .setLabel("⚙ Support")
+        .setStyle(ButtonStyle.Primary),
+
+      new ButtonBuilder()
+        .setCustomId("ticket_payment")
+        .setLabel("💳 Payment")
+        .setStyle(ButtonStyle.Secondary)
     );
 
     await panelChannel.send({
@@ -118,7 +130,7 @@ module.exports = {
         `👥 Staff Role: <@&${staffRole.id}>\n` +
         `🖥 Subscriptions Channel: <#${interaction.options.getChannel("subscriptions_channel").id}>\n` +
         `⭐ Ratings Channel: <#${interaction.options.getChannel("ratings_channel").id}>\n` +
-        "🎟 Ticket panel sent."
+        "🎟 Ticket panel sent with categories."
     });
   }
 };
