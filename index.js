@@ -58,25 +58,28 @@ client.on("interactionCreate", async interaction => {
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply({ content: "❌ Error executing command" });
       } else {
-        await interaction.reply({ content: "❌ Error executing command", ephemeral: true });
+        await interaction.reply({
+          content: "❌ Error executing command",
+          ephemeral: true
+        });
       }
     }
   }
 
   /* ========= TICKET BUTTONS ========= */
   if (interaction.isButton()) {
-    // فتح / استلام / إغلاق
     await ticketButtons(interaction);
-    await ticketCloseModal(interaction);
   }
 
-  /* ========= CLOSE TICKET MODAL ========= */
+  /* ========= TICKET CLOSE MODAL ========= */
   if (interaction.isModalSubmit() && interaction.customId === "close_modal") {
+    await ticketCloseModal(interaction);
+
+    // ===== LOGGING =====
     const reason = interaction.fields.getTextInputValue("reason");
     const cfg = ticketConfig.load();
 
     const logChannel = interaction.guild.channels.cache.get(cfg.logChannel);
-
     if (logChannel) {
       logChannel.send({
         content:
