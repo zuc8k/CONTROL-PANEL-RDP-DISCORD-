@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require("discord.js");
-const langStore = require("../utils/lang");
+const i18n = require("../utils/i18n");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -17,15 +17,14 @@ module.exports = {
 
   async execute(interaction) {
     const lang = interaction.options.getString("language");
-
-    langStore.set(interaction.user.id, lang);
+    i18n.setUserLang(interaction.user.id, lang);
 
     await interaction.reply({
       ephemeral: true,
       content:
         lang === "ar"
-          ? "✅ تم تغيير اللغة إلى العربية"
-          : "✅ Language changed to English"
+          ? i18n.t(interaction.user.id, "lang.changed.ar")
+          : i18n.t(interaction.user.id, "lang.changed.en")
     });
   }
 };
