@@ -2,7 +2,7 @@ const { Client, GatewayIntentBits, Collection } = require("discord.js");
 const fs = require("fs");
 const { token } = require("./config.json");
 
-// 🔥 Automation Scheduler
+// 🔥 Automation Scheduler (needs client)
 const startScheduler = require("./utils/scheduler");
 
 const client = new Client({
@@ -25,8 +25,8 @@ for (const file of commandFiles) {
 client.once("ready", () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
 
-  // 🔥 يبدأ Auto-Expire / Auto-Disable
-  startScheduler();
+  // 🔔 Auto-Warn + ⛔ Auto-Expire
+  startScheduler(client);
   console.log("⏱ Automation Scheduler started");
 });
 
