@@ -37,7 +37,7 @@ module.exports = async (interaction) => {
     const embed = new EmbedBuilder()
       .setTitle("🎟 Ticket Opened")
       .setDescription(
-        `👤 User: ${interaction.user}\n` +
+        `👤 User: ${interaction.user}\n\n` +
         "يرجى توضيح طلبك وسيتم الرد عليك قريبًا."
       )
       .setColor("Blue");
@@ -69,8 +69,19 @@ module.exports = async (interaction) => {
     });
   }
 
-  /* ========= CLAIM TICKET ========= */
+  /* ========= CLAIM TICKET (STAFF ONLY) ========= */
   if (interaction.customId === "ticket_claim") {
+    if (
+      !interaction.member.permissions.has(
+        PermissionsBitField.Flags.ManageChannels
+      )
+    ) {
+      return interaction.reply({
+        ephemeral: true,
+        content: "⛔ You don't have permission to claim tickets."
+      });
+    }
+
     await interaction.channel.permissionOverwrites.edit(interaction.user.id, {
       ViewChannel: true,
       SendMessages: true
@@ -90,8 +101,19 @@ module.exports = async (interaction) => {
     }
   }
 
-  /* ========= TRANSFER MENU ========= */
+  /* ========= TRANSFER MENU (STAFF ONLY) ========= */
   if (interaction.customId === "ticket_transfer") {
+    if (
+      !interaction.member.permissions.has(
+        PermissionsBitField.Flags.ManageChannels
+      )
+    ) {
+      return interaction.reply({
+        ephemeral: true,
+        content: "⛔ You don't have permission to transfer tickets."
+      });
+    }
+
     const menu = new ActionRowBuilder().addComponents(
       new UserSelectMenuBuilder()
         .setCustomId("ticket_transfer_user")
@@ -104,8 +126,22 @@ module.exports = async (interaction) => {
     });
   }
 
-  /* ========= TRANSFER ACTION ========= */
-  if (interaction.isUserSelectMenu() && interaction.customId === "ticket_transfer_user") {
+  /* ========= TRANSFER ACTION (STAFF ONLY) ========= */
+  if (
+    interaction.isUserSelectMenu() &&
+    interaction.customId === "ticket_transfer_user"
+  ) {
+    if (
+      !interaction.member.permissions.has(
+        PermissionsBitField.Flags.ManageChannels
+      )
+    ) {
+      return interaction.reply({
+        ephemeral: true,
+        content: "⛔ You don't have permission to complete transfer."
+      });
+    }
+
     const userId = interaction.values[0];
 
     await interaction.channel.permissionOverwrites.edit(userId, {
