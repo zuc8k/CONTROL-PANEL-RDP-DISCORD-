@@ -1,0 +1,18 @@
+{
+  "ticket.created": "✅ Ticket created: {channel}",
+  "ticket.exists": "❗ You already have an open ticket of this type.",
+  "ticket.onlyStaff": "⛔ This action is for staff only.",
+  "ticket.claimed": "📥 Ticket claimed by {user}",
+  "ticket.closed": "🔒 Ticket closed",
+  "thanks.rating": "🙏 Thank you for your rating! ({rating}/5)",
+
+  "panel.title": "🎟 VPS Support & Sales",
+  "panel.desc": "Choose the ticket type you need 👇",
+
+  "button.buy": "💻 Buy VPS",
+  "button.support": "⚙ Support",
+  "button.payment": "💳 Payment & Billing",
+
+  "lang.changed.ar": "✅ تم تغيير اللغة إلى العربية",
+  "lang.changed.en": "✅ Language changed to English"
+}
