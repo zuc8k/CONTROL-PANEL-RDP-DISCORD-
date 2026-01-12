@@ -1,4 +1,4 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const ticketConfig = require("../utils/ticketConfig");
 
 module.exports = async (interaction) => {
@@ -7,11 +7,12 @@ module.exports = async (interaction) => {
   const rating = interaction.customId.split("_")[1];
   const cfg = ticketConfig.load();
 
-  // Log Embed
-  const logChannel = interaction.guild.channels.cache.get(cfg.logChannel);
-  if (logChannel) {
+  // ⭐ قناة التقييمات
+  const ratingsChannel = interaction.guild.channels.cache.get(cfg.ratingsChannel);
+
+  if (ratingsChannel) {
     const embed = new EmbedBuilder()
-      .setTitle("⭐ Ticket Rating")
+      .setTitle("⭐ New Service Rating")
       .setColor("Gold")
       .addFields(
         { name: "👤 User", value: `${interaction.user}`, inline: true },
@@ -20,7 +21,7 @@ module.exports = async (interaction) => {
       )
       .setTimestamp();
 
-    logChannel.send({ embeds: [embed] });
+    ratingsChannel.send({ embeds: [embed] });
   }
 
   await interaction.reply({
