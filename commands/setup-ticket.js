@@ -37,6 +37,12 @@ module.exports = {
         .setRequired(true)
     )
 
+    .addRoleOption(o =>
+      o.setName("staff_role")
+        .setDescription("Role allowed to manage tickets (staff)")
+        .setRequired(true)
+    )
+
     .addStringOption(o =>
       o.setName("panel_image")
         .setDescription("Image URL for ticket panel (optional)")
@@ -53,11 +59,13 @@ module.exports = {
     const panelChannel = interaction.options.getChannel("panel_channel");
     const panelImage = interaction.options.getString("panel_image");
     const insideImage = interaction.options.getString("inside_image");
+    const staffRole = interaction.options.getRole("staff_role");
 
     ticketConfig.save({
       panelChannel: panelChannel.id,
       category: interaction.options.getChannel("category").id,
       logChannel: interaction.options.getChannel("log_channel").id,
+      staffRole: staffRole.id,
       panelImage: panelImage || null,
       insideImage: insideImage || null
     });
@@ -89,7 +97,10 @@ module.exports = {
 
     await interaction.reply({
       ephemeral: true,
-      content: "✅ Ticket panel sent and system configured."
+      content:
+        "✅ **Ticket system configured successfully!**\n\n" +
+        `👥 Staff Role: <@&${staffRole.id}>\n` +
+        "🎟 Ticket panel sent."
     });
   }
 };
